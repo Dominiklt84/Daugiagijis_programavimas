@@ -1,5 +1,7 @@
 package app.ui;
 
+import app.model.SearchSummary;
+import app.strategy.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -8,6 +10,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -84,6 +87,17 @@ public class MainController implements Initializable {
         outputArea.appendText("Threads: "+threads+"\n");
 
         outputArea.appendText("Ready to start search...\n");
+        StrategyRepository strategy = new SingleThreadSearch();
+        Path folder = Path.of(folderPath);
+        SearchSummary summary = strategy.search(folder,keyword);
+
+        timeLabel.setText(summary.getDurationMs() + " ms");
+
+        outputArea.appendText("\nSearch finished!\n");
+        outputArea.appendText("Mode: " + summary.getModeName() + "\n");
+        outputArea.appendText("Total files: " + summary.getTotalFiles() + "\n");
+        outputArea.appendText("Files with matches: " + summary.getFilesWithMatches() + "\n");
+        outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
     }
 
     private void showAlert(String message){

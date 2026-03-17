@@ -1,8 +1,7 @@
-package app.strategy;
+package app.service;
 
 import app.model.SearchSummary;
 import app.progress.ProgressListenerRepository;
-import app.scanner.FileScanner;
 import app.scanner.FileScannerRepository;
 
 import java.io.IOException;
@@ -10,14 +9,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ManualThreadsSearch implements StrategyRepository {
+public class ManualThreadsSearchService implements ServiceRepository {
 
-    private int threadCount;
+    private final int threadCount;
+    private final FileScannerRepository scanner;
 
-    public ManualThreadsSearch(int threadCount) {
+    public ManualThreadsSearchService(int threadCount, FileScannerRepository scanner) {
         this.threadCount = threadCount;
+        this.scanner = scanner;
     }
 
     @Override
@@ -25,10 +27,9 @@ public class ManualThreadsSearch implements StrategyRepository {
 
         long startTime = System.currentTimeMillis();
 
-        FileScannerRepository scanner = new FileScanner();
         AtomicInteger processed = new AtomicInteger(0);
-
-        int totalMatches = 0;
+        AtomicInteger totalMatches = new AtomicInteger(0);
+        AtomicInteger filesWithMatches = new AtomicInteger(0);
 
         try {
 
@@ -39,11 +40,6 @@ public class ManualThreadsSearch implements StrategyRepository {
             final int totalFiles = files.size();
 
             List<Thread> threads = new ArrayList<>();
-            List<Integer> results = new ArrayList<>();
-
-            for (int i = 0; i < threadCount; i++) {
-                results.add(0);
-            }
 
             int chunkSize = Math.max(1, files.size() / threadCount);
 
@@ -54,25 +50,22 @@ public class ManualThreadsSearch implements StrategyRepository {
                         ? files.size()
                         : Math.min(files.size(), start + chunkSize);
 
-                int index = i;
-
                 Thread thread = new Thread(() -> {
-
-                    int localMatches = 0;
 
                     for (int j = start; j < end; j++) {
 
                         Path file = files.get(j);
 
                         int count = scanner.countMatches(file, keyword);
-                        localMatches += count;
+
+                        if (count > 0) {
+                            filesWithMatches.incrementAndGet();
+                        }
+
+                        totalMatches.addAndGet(count);
 
                         int done = processed.incrementAndGet();
                         listener.onProgress(done, totalFiles);
-                    }
-
-                    synchronized (results) {
-                        results.set(index, localMatches);
                     }
                 });
 
@@ -80,30 +73,22 @@ public class ManualThreadsSearch implements StrategyRepository {
                 thread.start();
             }
 
-            // czekamy na wszystkie wątki
             for (Thread thread : threads) {
                 thread.join();
-            }
-
-            // sumujemy wyniki
-            for (int count : results) {
-                totalMatches += count;
             }
 
             long duration = System.currentTimeMillis() - startTime;
 
             return new SearchSummary(
                     totalFiles,
-                    0,
-                    totalMatches,
+                    filesWithMatches.get(),
+                    totalMatches.get(),
                     duration,
                     "Manual Threads (" + threadCount + ")"
             );
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error during search", e);
         }
-
-        return new SearchSummary(0, 0, 0, 0, "Error");
     }
 }

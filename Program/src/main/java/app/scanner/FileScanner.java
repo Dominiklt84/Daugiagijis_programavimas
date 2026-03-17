@@ -9,17 +9,19 @@ public class FileScanner implements FileScannerRepository{
 
     @Override
     public int countMatches(Path file, String keyword) {
-
         int count = 0;
+
         try (BufferedReader reader = Files.newBufferedReader(file)) {
             String line;
+            String lowerKeyword = keyword.toLowerCase();
+
             while ((line = reader.readLine()) != null) {
-                if (line.contains(keyword)) {
+                if (line.toLowerCase().contains(lowerKeyword)) {
                     count++;
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error reading file: "+file,e);
         }
         return count;
     }

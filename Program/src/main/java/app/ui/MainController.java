@@ -1,7 +1,9 @@
 package app.ui;
 
 import app.model.SearchSummary;
-import app.strategy.*;
+import app.scanner.FileScanner;
+import app.scanner.FileScannerRepository;
+import app.service.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -14,6 +16,10 @@ import java.nio.file.Path;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
+    private static final String MODE_SINGLE = "Single Thread";
+    private static final String MODE_THREADS = "Threads";
+    private static final String MODE_POOL = "ThreadPool";
+
     @FXML private TextField folderField;
     @FXML private Button browseButton;
 
@@ -33,7 +39,7 @@ public class MainController implements Initializable {
         threadsSpinner.setValueFactory(valueFactory);
         threadsSpinner.setEditable(true);
 
-        modeCombo.getItems().addAll("Single Thread","Threads","ThreadPool");
+        modeCombo.getItems().addAll(MODE_SINGLE, MODE_THREADS, MODE_POOL);
         modeCombo.setPromptText("Select execution mode");
 
         progressBar.setProgress(0);
@@ -87,20 +93,12 @@ public class MainController implements Initializable {
         outputArea.appendText("Threads: "+threads+"\n");
 
         outputArea.appendText("Ready to start search...\n");
-        StrategyRepository strategy;
 
-        if(mode.equals("Single Thread")){
-            strategy = new SingleThreadSearch();
-        }
-        else if(mode.equals("ThreadPool")){
-            strategy = new ThreadPoolSearch(threads);
-        }
-        else{
-            strategy = new ManualThreadsSearch(threads);
-        }
+        ServiceRepository strategy = createStrategy(mode, threads);
         Path folder = Path.of(folderPath);
 
-        new Thread(() -> {
+        startButton.setDisable(true);
+        Thread worker = new Thread(() -> {
 
             SearchSummary summary = strategy.search(folder,keyword,((processed, total) -> {
                 double progress = (double) processed / total;
@@ -109,7 +107,6 @@ public class MainController implements Initializable {
                     progressBar.setProgress(progress);
                 });
             }));
-
 
             javafx.application.Platform.runLater(() -> {
 
@@ -122,9 +119,21 @@ public class MainController implements Initializable {
                 outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
 
                 progressBar.setProgress(0);
+                startButton.setDisable(false);
             });
 
-        }).start();
+        });
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private ServiceRepository createStrategy(String mode, int threads) {
+        FileScannerRepository scanner = new FileScanner();
+        return switch (mode) {
+            case MODE_SINGLE -> new SingleThreadSearchService(scanner);
+            case MODE_POOL -> new ThreadPoolSearchService(threads, scanner);
+            default -> new ManualThreadsSearchService(threads, scanner);
+        };
     }
 
     private void showAlert(String message){

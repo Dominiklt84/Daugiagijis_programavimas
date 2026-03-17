@@ -1,21 +1,26 @@
-package app.strategy;
+package app.service;
 
 import app.model.SearchSummary;
 import app.progress.ProgressListenerRepository;
-import app.scanner.FileScanner;
+import app.scanner.FileScannerRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class SingleThreadSearch implements StrategyRepository {
+public class SingleThreadSearchService implements ServiceRepository {
+
+    private final FileScannerRepository scanner;
+
+    public SingleThreadSearchService(FileScannerRepository scanner) {
+        this.scanner = scanner;
+    }
+
     @Override
     public SearchSummary search(Path folder, String keyword, ProgressListenerRepository listener) {
 
         long startTime = System.currentTimeMillis();
-
-        FileScanner scanner = new FileScanner();
 
         int totalFiles = 0;
         int totalMatches = 0;
@@ -40,15 +45,15 @@ public class SingleThreadSearch implements StrategyRepository {
 
                 totalMatches += count;
                 processed++;
+
                 listener.onProgress(processed, totalFiles);
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error during single thread search", e);
         }
 
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
+        long duration = System.currentTimeMillis() - startTime;
 
         return new SearchSummary(
                 totalFiles,

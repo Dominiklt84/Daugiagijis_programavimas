@@ -87,17 +87,44 @@ public class MainController implements Initializable {
         outputArea.appendText("Threads: "+threads+"\n");
 
         outputArea.appendText("Ready to start search...\n");
-        StrategyRepository strategy = new SingleThreadSearch();
+        StrategyRepository strategy;
+
+        if(mode.equals("Single Thread")){
+            strategy = new SingleThreadSearch();
+        }
+        else if(mode.equals("ThreadPool")){
+            strategy = new ThreadPoolSearch(threads);
+        }
+        else{
+            strategy = new ManualThreadsSearch(threads);
+        }
         Path folder = Path.of(folderPath);
-        SearchSummary summary = strategy.search(folder,keyword);
 
-        timeLabel.setText(summary.getDurationMs() + " ms");
+        new Thread(() -> {
 
-        outputArea.appendText("\nSearch finished!\n");
-        outputArea.appendText("Mode: " + summary.getModeName() + "\n");
-        outputArea.appendText("Total files: " + summary.getTotalFiles() + "\n");
-        outputArea.appendText("Files with matches: " + summary.getFilesWithMatches() + "\n");
-        outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
+            SearchSummary summary = strategy.search(folder,keyword,((processed, total) -> {
+                double progress = (double) processed / total;
+
+                javafx.application.Platform.runLater(() -> {
+                    progressBar.setProgress(progress);
+                });
+            }));
+
+
+            javafx.application.Platform.runLater(() -> {
+
+                timeLabel.setText(summary.getDurationMs() + " ms");
+
+                outputArea.appendText("\nSearch finished!\n");
+                outputArea.appendText("Mode: " + summary.getModeName() + "\n");
+                outputArea.appendText("Total files: " + summary.getTotalFiles() + "\n");
+                outputArea.appendText("Files with matches: " + summary.getFilesWithMatches() + "\n");
+                outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
+
+                progressBar.setProgress(0);
+            });
+
+        }).start();
     }
 
     private void showAlert(String message){

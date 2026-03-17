@@ -1,6 +1,7 @@
 package app.strategy;
 
 import app.model.SearchSummary;
+import app.progress.ProgressListenerRepository;
 import app.scanner.FileScanner;
 
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public class SingleThreadSearch implements StrategyRepository {
     @Override
-    public SearchSummary search(Path folder, String keyword) {
+    public SearchSummary search(Path folder, String keyword, ProgressListenerRepository listener) {
 
         long startTime = System.currentTimeMillis();
 
@@ -19,6 +20,7 @@ public class SingleThreadSearch implements StrategyRepository {
         int totalFiles = 0;
         int totalMatches = 0;
         int filesWithMatches = 0;
+        int processed = 0;
 
         try {
 
@@ -37,6 +39,8 @@ public class SingleThreadSearch implements StrategyRepository {
                 }
 
                 totalMatches += count;
+                processed++;
+                listener.onProgress(processed, totalFiles);
             }
 
         } catch (IOException e) {

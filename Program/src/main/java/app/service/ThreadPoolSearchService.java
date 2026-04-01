@@ -35,9 +35,7 @@ public class ThreadPoolSearchService implements ServiceRepository {
 
         try {
 
-            List<Path> files = Files.walk(folder)
-                    .filter(Files::isRegularFile)
-                    .toList();
+            List<Path> files = Files.walk(folder).filter(Files::isRegularFile).toList();
 
             final int totalFiles = files.size();
 

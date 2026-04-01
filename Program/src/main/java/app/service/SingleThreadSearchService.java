@@ -29,9 +29,7 @@ public class SingleThreadSearchService implements ServiceRepository {
 
         try {
 
-            List<Path> files = Files.walk(folder)
-                    .filter(Files::isRegularFile)
-                    .toList();
+            List<Path> files = Files.walk(folder).filter(Files::isRegularFile).toList();
 
             totalFiles = files.size();
 

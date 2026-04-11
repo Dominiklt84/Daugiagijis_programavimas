@@ -1,8 +1,8 @@
 package app.ui;
 
 import app.model.SearchSummary;
+import app.scanner.FileScannerImpl;
 import app.scanner.FileScanner;
-import app.scanner.FileScannerRepository;
 import app.service.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -41,6 +41,11 @@ public class MainController implements Initializable {
 
         modeCombo.getItems().addAll(MODE_SINGLE, MODE_THREADS, MODE_POOL);
         modeCombo.setPromptText("Select execution mode");
+
+        modeCombo.setOnAction(e -> {
+            String mode = modeCombo.getValue();
+            threadsSpinner.setDisable(MODE_SINGLE.equals(mode));
+        });
 
         progressBar.setProgress(0);
         timeLabel.setText("0");
@@ -91,22 +96,21 @@ public class MainController implements Initializable {
         outputArea.appendText("Keyword: "+keyword+"\n");
         outputArea.appendText("Mode: "+mode+"\n");
         outputArea.appendText("Threads: "+threads+"\n");
+        outputArea.appendText("Starting search...\n");
 
-        outputArea.appendText("Ready to start search...\n");
-
-        ServiceRepository strategy = createStrategy(mode, threads);
+        SearchService strategy = createStrategy(mode, threads);
         Path folder = Path.of(folderPath);
 
         startButton.setDisable(true);
         Thread worker = new Thread(() -> {
 
-            SearchSummary summary = strategy.search(folder,keyword,((processed, total) -> {
+            SearchSummary summary = strategy.search(folder,keyword,(processed, total) -> {
                 double progress = (double) processed / total;
 
                 javafx.application.Platform.runLater(() -> {
                     progressBar.setProgress(progress);
                 });
-            }));
+            });
 
             javafx.application.Platform.runLater(() -> {
 
@@ -118,7 +122,7 @@ public class MainController implements Initializable {
                 outputArea.appendText("Files with matches: " + summary.getFilesWithMatches() + "\n");
                 outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
 
-                progressBar.setProgress(0);
+                progressBar.setProgress(1);
                 startButton.setDisable(false);
             });
 
@@ -127,8 +131,8 @@ public class MainController implements Initializable {
         worker.start();
     }
 
-    private ServiceRepository createStrategy(String mode, int threads) {
-        FileScannerRepository scanner = new FileScanner();
+    private SearchService createStrategy(String mode, int threads) {
+        FileScanner scanner = new FileScannerImpl();
         return switch (mode) {
             case MODE_SINGLE -> new SingleThreadSearchService(scanner);
             case MODE_POOL -> new ThreadPoolSearchService(threads, scanner);

@@ -1,24 +1,25 @@
 package app.service;
 
 import app.model.SearchSummary;
-import app.progress.ProgressListenerRepository;
-import app.scanner.FileScannerRepository;
+import app.model.SearchMode;
+import app.progress.ProgressListener;
+import app.scanner.FileScanner;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class SingleThreadSearchService implements ServiceRepository {
+public class SingleThreadSearchService implements SearchService {
 
-    private final FileScannerRepository scanner;
+    private final FileScanner scanner;
 
-    public SingleThreadSearchService(FileScannerRepository scanner) {
+    public SingleThreadSearchService(FileScanner scanner) {
         this.scanner = scanner;
     }
 
     @Override
-    public SearchSummary search(Path folder, String keyword, ProgressListenerRepository listener) {
+    public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
 
         long startTime = System.currentTimeMillis();
 
@@ -29,7 +30,11 @@ public class SingleThreadSearchService implements ServiceRepository {
 
         try {
 
-            List<Path> files = Files.walk(folder).filter(Files::isRegularFile).toList();
+            List<Path> files;
+
+            try (var stream = Files.walk(folder)) {
+                files = stream.filter(Files::isRegularFile).toList();
+            }
 
             totalFiles = files.size();
 
@@ -44,7 +49,9 @@ public class SingleThreadSearchService implements ServiceRepository {
                 totalMatches += count;
                 processed++;
 
-                listener.onProgress(processed, totalFiles);
+                if (listener != null) {
+                    listener.onProgress(processed, totalFiles);
+                }
             }
 
         } catch (IOException e) {
@@ -58,7 +65,7 @@ public class SingleThreadSearchService implements ServiceRepository {
                 filesWithMatches,
                 totalMatches,
                 duration,
-                "Single Thread"
+                SearchMode.SINGLE_THREAD
         );
     }
 }

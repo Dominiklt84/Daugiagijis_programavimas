@@ -5,9 +5,9 @@ public class SearchSummary {
     private int filesWithMatches;
     private int totalMatches;
     private long durationMs;
-    private String modeName;
+    private SearchMode modeName;
 
-    public SearchSummary(int totalFiles, int filesWithMatches, int totalMatches, long durationMs, String modeName) {
+    public SearchSummary(int totalFiles, int filesWithMatches, int totalMatches, long durationMs, SearchMode modeName) {
         this.totalFiles = totalFiles;
         this.filesWithMatches = filesWithMatches;
         this.totalMatches = totalMatches;
@@ -31,7 +31,7 @@ public class SearchSummary {
         return durationMs;
     }
 
-    public String getModeName() {
+    public SearchMode getModeName() {
         return modeName;
     }
 }

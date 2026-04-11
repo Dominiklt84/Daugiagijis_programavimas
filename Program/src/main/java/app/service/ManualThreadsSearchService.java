@@ -1,8 +1,9 @@
 package app.service;
 
+import app.model.SearchMode;
 import app.model.SearchSummary;
-import app.progress.ProgressListenerRepository;
-import app.scanner.FileScannerRepository;
+import app.progress.ProgressListener;
+import app.scanner.FileScanner;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,18 +13,18 @@ import java.util.List;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ManualThreadsSearchService implements ServiceRepository {
+public class ManualThreadsSearchService implements SearchService {
 
     private final int threadCount;
-    private final FileScannerRepository scanner;
+    private final FileScanner scanner;
 
-    public ManualThreadsSearchService(int threadCount, FileScannerRepository scanner) {
+    public ManualThreadsSearchService(int threadCount, FileScanner scanner) {
         this.threadCount = threadCount;
         this.scanner = scanner;
     }
 
     @Override
-    public SearchSummary search(Path folder, String keyword, ProgressListenerRepository listener) {
+    public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
 
         long startTime = System.currentTimeMillis();
 
@@ -32,21 +33,37 @@ public class ManualThreadsSearchService implements ServiceRepository {
         AtomicInteger filesWithMatches = new AtomicInteger(0);
 
         try {
+            List<Path> files;
+            try (var stream = Files.walk(folder)) {
+                files = stream.filter(Files::isRegularFile).toList();
+            }
 
-            List<Path> files = Files.walk(folder).filter(Files::isRegularFile).toList();
+            int totalFiles = files.size();
 
-            final int totalFiles = files.size();
+            int actualThreadCount = threadCount;
+
+            if (threadCount > totalFiles) {
+                actualThreadCount = totalFiles;
+            }
+
+            if (actualThreadCount == 0) {
+                actualThreadCount = 1;
+            }
 
             List<Thread> threads = new ArrayList<>();
 
-            int chunkSize = Math.max(1, files.size() / threadCount);
+            int chunkSize = Math.max(1, totalFiles / actualThreadCount);
 
-            for (int i = 0; i < threadCount; i++) {
+            for (int i = 0; i < actualThreadCount; i++) {
 
                 int start = i * chunkSize;
-                int end = (i == threadCount - 1)
-                        ? files.size()
-                        : Math.min(files.size(), start + chunkSize);
+                int end;
+
+                if (i == actualThreadCount - 1) {
+                    end = totalFiles;
+                } else {
+                    end = Math.min(totalFiles, start + chunkSize);
+                }
 
                 Thread thread = new Thread(() -> {
 
@@ -63,7 +80,10 @@ public class ManualThreadsSearchService implements ServiceRepository {
                         totalMatches.addAndGet(count);
 
                         int done = processed.incrementAndGet();
-                        listener.onProgress(done, totalFiles);
+
+                        if (listener != null) {
+                            listener.onProgress(done, totalFiles);
+                        }
                     }
                 });
 
@@ -72,7 +92,12 @@ public class ManualThreadsSearchService implements ServiceRepository {
             }
 
             for (Thread thread : threads) {
-                thread.join();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Thread interrupted", e);
+                }
             }
 
             long duration = System.currentTimeMillis() - startTime;
@@ -82,10 +107,10 @@ public class ManualThreadsSearchService implements ServiceRepository {
                     filesWithMatches.get(),
                     totalMatches.get(),
                     duration,
-                    "Manual Threads (" + threadCount + ")"
+                    SearchMode.MANUAL_THREADS
             );
 
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Error during search", e);
         }
     }

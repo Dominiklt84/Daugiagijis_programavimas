@@ -1,5 +1,5 @@
 package app.progress;
 
-public interface ProgressListenerRepository {
+public interface ProgressListener {
     void onProgress(int processed, int total);
 }

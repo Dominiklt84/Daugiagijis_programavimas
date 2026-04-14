@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class SingleThreadSearchService implements SearchService {
-
     private final FileScanner scanner;
 
     public SingleThreadSearchService(FileScanner scanner) {
@@ -20,18 +19,14 @@ public class SingleThreadSearchService implements SearchService {
 
     @Override
     public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
-
         long startTime = System.currentTimeMillis();
-
         int totalFiles = 0;
         int totalMatches = 0;
         int filesWithMatches = 0;
         int processed = 0;
 
         try {
-
             List<Path> files;
-
             try (var stream = Files.walk(folder)) {
                 files = stream.filter(Files::isRegularFile).toList();
             }
@@ -39,7 +34,6 @@ public class SingleThreadSearchService implements SearchService {
             totalFiles = files.size();
 
             for (Path file : files) {
-
                 int count = scanner.countMatches(file, keyword);
 
                 if (count > 0) {

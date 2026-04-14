@@ -17,7 +17,7 @@ import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
     private static final String MODE_SINGLE = "Single Thread";
-    private static final String MODE_THREADS = "Threads";
+    private static final String MODE_THREADS = "Manual Threads";
     private static final String MODE_POOL = "ThreadPool";
 
     @FXML private TextField folderField;

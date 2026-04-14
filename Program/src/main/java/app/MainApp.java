@@ -20,7 +20,6 @@ public class MainApp extends Application {
             throw new RuntimeException("Failed to start application", e);
         }
     }
-
     public static void main(String[] args) {
         launch();
     }

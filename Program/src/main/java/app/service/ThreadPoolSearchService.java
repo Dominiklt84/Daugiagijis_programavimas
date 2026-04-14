@@ -14,7 +14,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadPoolSearchService implements SearchService {
-
     private final int threadCount;
     private final FileScanner scanner;
 
@@ -25,17 +24,12 @@ public class ThreadPoolSearchService implements SearchService {
 
     @Override
     public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
-
         long startTime = System.currentTimeMillis();
-
         AtomicInteger processed = new AtomicInteger(0);
         AtomicInteger totalMatches = new AtomicInteger(0);
         AtomicInteger filesWithMatches = new AtomicInteger(0);
 
-        ExecutorService pool;
-
         try {
-
             List<Path> files;
 
             try (var stream = Files.walk(folder)) {
@@ -43,7 +37,6 @@ public class ThreadPoolSearchService implements SearchService {
             }
 
             int totalFiles = files.size();
-
             int actualThreadCount = threadCount;
 
             if (threadCount > totalFiles) {
@@ -54,14 +47,10 @@ public class ThreadPoolSearchService implements SearchService {
                 actualThreadCount = 1;
             }
 
-            pool = Executors.newFixedThreadPool(actualThreadCount);
-
-            List<Future<?>> futures = new ArrayList<>();
+            ExecutorService pool = Executors.newFixedThreadPool(actualThreadCount);
 
             for (Path file : files) {
-
-                Future<?> future = pool.submit(() -> {
-
+                pool.submit(() -> {
                     int count = scanner.countMatches(file, keyword);
 
                     if (count > 0) {
@@ -69,19 +58,21 @@ public class ThreadPoolSearchService implements SearchService {
                     }
 
                     totalMatches.addAndGet(count);
-
                     int done = processed.incrementAndGet();
 
                     if (listener != null) {
                         listener.onProgress(done, totalFiles);
                     }
                 });
-
-                futures.add(future);
             }
 
-            for (Future<?> future : futures) {
-                future.get();
+            pool.shutdown();
+
+            try {
+                pool.awaitTermination(1, TimeUnit.HOURS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Thread interrupted", e);
             }
 
             long duration = System.currentTimeMillis() - startTime;
@@ -94,10 +85,7 @@ public class ThreadPoolSearchService implements SearchService {
                     SearchMode.THREAD_POOL
             );
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted", e);
-        } catch (IOException | ExecutionException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Error during thread pool search", e);
         }
     }

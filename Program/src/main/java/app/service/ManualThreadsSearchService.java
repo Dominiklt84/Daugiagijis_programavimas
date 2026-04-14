@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ManualThreadsSearchService implements SearchService {
-
     private final int threadCount;
     private final FileScanner scanner;
 
@@ -39,7 +38,6 @@ public class ManualThreadsSearchService implements SearchService {
             }
 
             int totalFiles = files.size();
-
             int actualThreadCount = threadCount;
 
             if (threadCount > totalFiles) {
@@ -51,11 +49,9 @@ public class ManualThreadsSearchService implements SearchService {
             }
 
             List<Thread> threads = new ArrayList<>();
-
             int chunkSize = Math.max(1, totalFiles / actualThreadCount);
 
             for (int i = 0; i < actualThreadCount; i++) {
-
                 int start = i * chunkSize;
                 int end;
 
@@ -66,11 +62,8 @@ public class ManualThreadsSearchService implements SearchService {
                 }
 
                 Thread thread = new Thread(() -> {
-
                     for (int j = start; j < end; j++) {
-
                         Path file = files.get(j);
-
                         int count = scanner.countMatches(file, keyword);
 
                         if (count > 0) {
@@ -78,7 +71,6 @@ public class ManualThreadsSearchService implements SearchService {
                         }
 
                         totalMatches.addAndGet(count);
-
                         int done = processed.incrementAndGet();
 
                         if (listener != null) {
@@ -86,7 +78,6 @@ public class ManualThreadsSearchService implements SearchService {
                         }
                     }
                 });
-
                 threads.add(thread);
                 thread.start();
             }

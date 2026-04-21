@@ -1,14 +1,14 @@
 package app.service;
 
+import app.file.FileReader;
+import app.file.FileReaderImpl;
 import app.model.PartialResult;
 import app.model.SearchSummary;
 import app.model.SearchMode;
 import app.progress.ProgressListener;
-import app.scanner.FileScanner;
+import app.file.FileScanner;
 import app.time.ExecutionTimer;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +17,12 @@ import java.util.concurrent.*;
 public class ThreadPoolSearchService implements SearchService {
     private final int threadCount;
     private final FileScanner scanner;
+    private final FileReader fileReader;
 
-    public ThreadPoolSearchService(int threadCount, FileScanner scanner) {
+    public ThreadPoolSearchService(int threadCount, FileScanner scanner,FileReader fileReader) {
         this.threadCount = threadCount;
         this.scanner = scanner;
+        this.fileReader=fileReader;
     }
 
     @Override
@@ -29,11 +31,7 @@ public class ThreadPoolSearchService implements SearchService {
         timer.start();
 
         try {
-            List<Path> files;
-
-            try (var stream = Files.walk(folder)) {
-                files = stream.filter(Files::isRegularFile).toList();
-            }
+            List<Path> files = fileReader.getFiles(folder);
 
             int totalFiles = files.size();
             int actualThreadCount = threadCount;
@@ -92,7 +90,7 @@ public class ThreadPoolSearchService implements SearchService {
                     SearchMode.THREAD_POOL
             );
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Error during thread pool search", e);
         }
     }

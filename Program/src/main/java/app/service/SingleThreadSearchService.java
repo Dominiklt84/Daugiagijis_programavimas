@@ -1,22 +1,24 @@
 package app.service;
 
+import app.file.FileReader;
+import app.file.FileReaderImpl;
 import app.model.PartialResult;
 import app.model.SearchSummary;
 import app.model.SearchMode;
 import app.progress.ProgressListener;
-import app.scanner.FileScanner;
+import app.file.FileScanner;
 import app.time.ExecutionTimer;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 public class SingleThreadSearchService implements SearchService {
     private final FileScanner scanner;
+    private final FileReader fileReader;
 
-    public SingleThreadSearchService(FileScanner scanner) {
+    public SingleThreadSearchService(FileScanner scanner, FileReader fileReader) {
         this.scanner = scanner;
+        this.fileReader=fileReader;
     }
 
     @Override
@@ -25,11 +27,7 @@ public class SingleThreadSearchService implements SearchService {
         timer.start();
 
         try {
-            List<Path> files;
-
-            try (var stream = Files.walk(folder)) {
-                files = stream.filter(Files::isRegularFile).toList();
-            }
+            List<Path> files = fileReader.getFiles(folder);
 
             int totalFiles = files.size();
             PartialResult result = new PartialResult();
@@ -53,7 +51,7 @@ public class SingleThreadSearchService implements SearchService {
                     SearchMode.SINGLE_THREAD
             );
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Error during single thread search", e);
         }
     }

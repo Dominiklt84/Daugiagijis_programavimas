@@ -1,4 +1,4 @@
-package app.scanner;
+package app.file;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,8 +16,12 @@ public class FileScannerImpl implements FileScanner {
             String lowerKeyword = keyword.toLowerCase();
 
             while ((line = reader.readLine()) != null) {
-                if (line.toLowerCase().contains(lowerKeyword)) {
+                String lowerLine = line.toLowerCase();
+                int index = 0;
+
+                while ((index = lowerLine.indexOf(lowerKeyword, index)) != -1) {
                     count++;
+                    index += lowerKeyword.length();
                 }
             }
         } catch (IOException e) {

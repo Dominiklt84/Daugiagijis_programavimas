@@ -1,4 +1,4 @@
-package app.scanner;
+package app.file;
 
 import java.nio.file.Path;
 

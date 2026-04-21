@@ -1,5 +1,9 @@
 package app.ui;
 
+import app.file.FileReader;
+import app.file.FileReaderImpl;
+import app.file.FileScanner;
+import app.file.FileScannerImpl;
 import app.model.SearchSummary;
 import app.service.SearchServiceController;
 import app.service.*;
@@ -67,6 +71,8 @@ public class MainPanel implements Initializable {
     }
 
     private void handleStart(){
+        FileScanner fileScanner=new FileScannerImpl();
+        FileReader fileReader=new FileReaderImpl();
         String folderPath = folderField.getText();
         String keyword = keywordField.getText();
         String mode = modeCombo.getValue();
@@ -101,7 +107,7 @@ public class MainPanel implements Initializable {
         }
         outputArea.appendText("Starting search...\n");
 
-        SearchService strategy = SearchServiceController.create(mode, threads);
+        SearchService strategy = SearchServiceController.create(mode, threads,fileScanner,fileReader);
         Path folder = Path.of(folderPath);
 
         startButton.setDisable(true);

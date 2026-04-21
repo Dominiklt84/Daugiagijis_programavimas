@@ -1,14 +1,14 @@
 package app.service;
 
+import app.file.FileReader;
+import app.file.FileReaderImpl;
 import app.model.PartialResult;
 import app.model.SearchMode;
 import app.model.SearchSummary;
 import app.progress.ProgressListener;
-import app.scanner.FileScanner;
+import app.file.FileScanner;
 import app.time.ExecutionTimer;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +16,12 @@ import java.util.List;
 public class ManualThreadsSearchService implements SearchService {
     private final int threadCount;
     private final FileScanner scanner;
+    private final FileReader fileReader;
 
-    public ManualThreadsSearchService(int threadCount, FileScanner scanner) {
+    public ManualThreadsSearchService(int threadCount, FileScanner scanner,FileReader fileReader) {
         this.threadCount = threadCount;
         this.scanner = scanner;
+        this.fileReader=fileReader;
     }
 
     @Override
@@ -28,11 +30,7 @@ public class ManualThreadsSearchService implements SearchService {
         timer.start();
 
         try {
-            List<Path> files;
-
-            try (var stream = Files.walk(folder)) {
-                files = stream.filter(Files::isRegularFile).toList();
-            }
+            List<Path> files = fileReader.getFiles(folder);
 
             int totalFiles = files.size();
             int actualThreadCount = threadCount;
@@ -107,7 +105,7 @@ public class ManualThreadsSearchService implements SearchService {
                     SearchMode.MANUAL_THREADS
             );
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Error during search", e);
         }
     }

@@ -1,7 +1,6 @@
 package app.service;
 
 import app.file.FileReader;
-import app.file.FileReaderImpl;
 import app.model.PartialResult;
 import app.model.SearchMode;
 import app.model.SearchSummary;

@@ -1,9 +1,6 @@
 package app.ui;
 
-import app.file.FileReader;
-import app.file.FileReaderImpl;
-import app.file.FileScanner;
-import app.file.FileScannerImpl;
+import app.file.*;
 import app.model.SearchSummary;
 import app.service.SearchServiceController;
 import app.service.*;
@@ -130,6 +127,9 @@ public class MainPanel implements Initializable {
                 outputArea.appendText("Total files: " + summary.getTotalFiles() + "\n");
                 outputArea.appendText("Files with matches: " + summary.getFilesWithMatches() + "\n");
                 outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
+
+                ResultWriter writer = new ResultWriter();
+                writer.writeToFile(summary, "results.txt");
 
                 progressBar.setProgress(1);
                 startButton.setDisable(false);

@@ -1,0 +1,7 @@
+Search Results
+-------------------------
+Mode: THREAD_POOL
+Total files: 100000
+Files with matches: 98282
+Total matches: 404412
+Duration: 1775 ms

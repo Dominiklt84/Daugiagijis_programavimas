@@ -1,17 +1,18 @@
 package app.service;
 
+import app.model.PartialResult;
 import app.model.SearchSummary;
 import app.model.SearchMode;
 import app.progress.ProgressListener;
 import app.scanner.FileScanner;
+import app.time.ExecutionTimer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadPoolSearchService implements SearchService {
     private final int threadCount;
@@ -24,10 +25,8 @@ public class ThreadPoolSearchService implements SearchService {
 
     @Override
     public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
-        long startTime = System.currentTimeMillis();
-        AtomicInteger processed = new AtomicInteger(0);
-        AtomicInteger totalMatches = new AtomicInteger(0);
-        AtomicInteger filesWithMatches = new AtomicInteger(0);
+        ExecutionTimer timer = new ExecutionTimer();
+        timer.start();
 
         try {
             List<Path> files;
@@ -48,26 +47,26 @@ public class ThreadPoolSearchService implements SearchService {
             }
 
             ExecutorService pool = Executors.newFixedThreadPool(actualThreadCount);
+            List<PartialResult> results=new ArrayList<>();
+            int[] processedTotal = {0};
 
             for (Path file : files) {
+                PartialResult partialResult=new PartialResult();
+                results.add(partialResult);
+
                 pool.submit(() -> {
                     int count = scanner.countMatches(file, keyword);
 
-                    if (count > 0) {
-                        filesWithMatches.incrementAndGet();
-                    }
-
-                    totalMatches.addAndGet(count);
-                    int done = processed.incrementAndGet();
+                    partialResult.addMatch(count);
+                    processedTotal[0]++;
 
                     if (listener != null) {
-                        listener.onProgress(done, totalFiles);
+                        listener.onProgress(processedTotal[0], totalFiles);
                     }
                 });
             }
 
             pool.shutdown();
-
             try {
                 pool.awaitTermination(1, TimeUnit.HOURS);
             } catch (InterruptedException e) {
@@ -75,12 +74,20 @@ public class ThreadPoolSearchService implements SearchService {
                 throw new RuntimeException("Thread interrupted", e);
             }
 
-            long duration = System.currentTimeMillis() - startTime;
+            int totalMatches = 0;
+            int filesWithMatches = 0;
+
+            for (PartialResult r : results) {
+                totalMatches += r.getTotalMatches();
+                filesWithMatches += r.getFilesWithMatches();
+            }
+
+            long duration = timer.stop();
 
             return new SearchSummary(
                     totalFiles,
-                    filesWithMatches.get(),
-                    totalMatches.get(),
+                    filesWithMatches,
+                    totalMatches,
                     duration,
                     SearchMode.THREAD_POOL
             );

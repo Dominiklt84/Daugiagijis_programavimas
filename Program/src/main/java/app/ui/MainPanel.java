@@ -1,8 +1,7 @@
 package app.ui;
 
 import app.model.SearchSummary;
-import app.scanner.FileScannerImpl;
-import app.scanner.FileScanner;
+import app.service.SearchServiceController;
 import app.service.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,7 +14,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
-public class MainController implements Initializable {
+public class MainPanel implements Initializable {
     private static final String MODE_SINGLE = "Single Thread";
     private static final String MODE_THREADS = "Manual Threads";
     private static final String MODE_POOL = "ThreadPool";
@@ -95,10 +94,14 @@ public class MainController implements Initializable {
         outputArea.appendText("Folder: "+folderPath+"\n");
         outputArea.appendText("Keyword: "+keyword+"\n");
         outputArea.appendText("Mode: "+mode+"\n");
-        outputArea.appendText("Threads: "+threads+"\n");
+        if (MODE_SINGLE.equals(mode)) {
+            outputArea.appendText("Threads: 1\n");
+        } else {
+            outputArea.appendText("Threads: " + threads + "\n");
+        }
         outputArea.appendText("Starting search...\n");
 
-        SearchService strategy = createStrategy(mode, threads);
+        SearchService strategy = SearchServiceController.create(mode, threads);
         Path folder = Path.of(folderPath);
 
         startButton.setDisable(true);
@@ -129,15 +132,6 @@ public class MainController implements Initializable {
         });
         worker.setDaemon(true);
         worker.start();
-    }
-
-    private SearchService createStrategy(String mode, int threads) {
-        FileScanner scanner = new FileScannerImpl();
-        return switch (mode) {
-            case MODE_SINGLE -> new SingleThreadSearchService(scanner);
-            case MODE_POOL -> new ThreadPoolSearchService(threads, scanner);
-            default -> new ManualThreadsSearchService(threads, scanner);
-        };
     }
 
     private void showAlert(String message){

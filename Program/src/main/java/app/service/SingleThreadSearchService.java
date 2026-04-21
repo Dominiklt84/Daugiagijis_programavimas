@@ -1,9 +1,11 @@
 package app.service;
 
+import app.model.PartialResult;
 import app.model.SearchSummary;
 import app.model.SearchMode;
 import app.progress.ProgressListener;
 import app.scanner.FileScanner;
+import app.time.ExecutionTimer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,47 +21,40 @@ public class SingleThreadSearchService implements SearchService {
 
     @Override
     public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
-        long startTime = System.currentTimeMillis();
-        int totalFiles = 0;
-        int totalMatches = 0;
-        int filesWithMatches = 0;
-        int processed = 0;
+        ExecutionTimer timer = new ExecutionTimer();
+        timer.start();
 
         try {
             List<Path> files;
+
             try (var stream = Files.walk(folder)) {
                 files = stream.filter(Files::isRegularFile).toList();
             }
 
-            totalFiles = files.size();
+            int totalFiles = files.size();
+            PartialResult result = new PartialResult();
 
             for (Path file : files) {
                 int count = scanner.countMatches(file, keyword);
-
-                if (count > 0) {
-                    filesWithMatches++;
-                }
-
-                totalMatches += count;
-                processed++;
+                result.addMatch(count);
 
                 if (listener != null) {
-                    listener.onProgress(processed, totalFiles);
+                    listener.onProgress(result.getProcessed(), totalFiles);
                 }
             }
+
+            long duration = timer.stop();
+
+            return new SearchSummary(
+                    totalFiles,
+                    result.getFilesWithMatches(),
+                    result.getTotalMatches(),
+                    duration,
+                    SearchMode.SINGLE_THREAD
+            );
 
         } catch (IOException e) {
             throw new RuntimeException("Error during single thread search", e);
         }
-
-        long duration = System.currentTimeMillis() - startTime;
-
-        return new SearchSummary(
-                totalFiles,
-                filesWithMatches,
-                totalMatches,
-                duration,
-                SearchMode.SINGLE_THREAD
-        );
     }
 }

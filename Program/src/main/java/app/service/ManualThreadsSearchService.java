@@ -1,17 +1,17 @@
 package app.service;
 
+import app.model.PartialResult;
 import app.model.SearchMode;
 import app.model.SearchSummary;
 import app.progress.ProgressListener;
 import app.scanner.FileScanner;
+import app.time.ExecutionTimer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ManualThreadsSearchService implements SearchService {
     private final int threadCount;
@@ -24,15 +24,12 @@ public class ManualThreadsSearchService implements SearchService {
 
     @Override
     public SearchSummary search(Path folder, String keyword, ProgressListener listener) {
-
-        long startTime = System.currentTimeMillis();
-
-        AtomicInteger processed = new AtomicInteger(0);
-        AtomicInteger totalMatches = new AtomicInteger(0);
-        AtomicInteger filesWithMatches = new AtomicInteger(0);
+        ExecutionTimer timer = new ExecutionTimer();
+        timer.start();
 
         try {
             List<Path> files;
+
             try (var stream = Files.walk(folder)) {
                 files = stream.filter(Files::isRegularFile).toList();
             }
@@ -49,7 +46,9 @@ public class ManualThreadsSearchService implements SearchService {
             }
 
             List<Thread> threads = new ArrayList<>();
+            List<PartialResult> results=new ArrayList<>();
             int chunkSize = Math.max(1, totalFiles / actualThreadCount);
+            int[] processedTotal = {0};
 
             for (int i = 0; i < actualThreadCount; i++) {
                 int start = i * chunkSize;
@@ -61,20 +60,19 @@ public class ManualThreadsSearchService implements SearchService {
                     end = Math.min(totalFiles, start + chunkSize);
                 }
 
+                PartialResult partialResult=new PartialResult();
+                results.add(partialResult);
+
                 Thread thread = new Thread(() -> {
                     for (int j = start; j < end; j++) {
                         Path file = files.get(j);
                         int count = scanner.countMatches(file, keyword);
 
-                        if (count > 0) {
-                            filesWithMatches.incrementAndGet();
-                        }
-
-                        totalMatches.addAndGet(count);
-                        int done = processed.incrementAndGet();
+                        partialResult.addMatch(count);
+                        processedTotal[0]++;
 
                         if (listener != null) {
-                            listener.onProgress(done, totalFiles);
+                            listener.onProgress(processedTotal[0], totalFiles);
                         }
                     }
                 });
@@ -91,12 +89,20 @@ public class ManualThreadsSearchService implements SearchService {
                 }
             }
 
-            long duration = System.currentTimeMillis() - startTime;
+            int totalMatches = 0;
+            int filesWithMatches = 0;
+
+            for (PartialResult r : results) {
+                totalMatches += r.getTotalMatches();
+                filesWithMatches += r.getFilesWithMatches();
+            }
+
+            long duration = timer.stop();
 
             return new SearchSummary(
                     totalFiles,
-                    filesWithMatches.get(),
-                    totalMatches.get(),
+                    filesWithMatches,
+                    totalMatches,
                     duration,
                     SearchMode.MANUAL_THREADS
             );

@@ -1,7 +1,7 @@
 Search Results
 -------------------------
-Mode: THREAD_POOL
+Mode: MANUAL_THREADS
 Total files: 100000
-Files with matches: 98282
-Total matches: 404412
-Duration: 1775 ms
+Files with matches: 100000
+Total matches: 4047787
+Duration: 1954 ms

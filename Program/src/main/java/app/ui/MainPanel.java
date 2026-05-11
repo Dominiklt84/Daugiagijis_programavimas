@@ -128,6 +128,16 @@ public class MainPanel implements Initializable {
                 outputArea.appendText("Files with matches: " + summary.getFilesWithMatches() + "\n");
                 outputArea.appendText("Total matches: " + summary.getTotalMatches() + "\n");
 
+                outputArea.appendText("Matched files saved to matched_files.txt\n");
+
+                Thread saveThread = new Thread(() -> {
+                    MatchedFilesWriter writer = new MatchedFilesWriter();
+                    writer.write(summary.getMatchedFiles(), "matched_files.txt");
+                });
+
+                saveThread.setDaemon(true);
+                saveThread.start();
+
                 ResultWriter writer = new ResultWriter();
                 writer.writeToFile(summary, "results.txt");
 

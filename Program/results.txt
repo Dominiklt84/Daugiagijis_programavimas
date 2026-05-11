@@ -1,7 +1,7 @@
 Search Results
 -------------------------
-Mode: MANUAL_THREADS
+Mode: SINGLE_THREAD
 Total files: 100000
-Files with matches: 100000
-Total matches: 4047787
-Duration: 1954 ms
+Files with matches: 0
+Total matches: 0
+Duration: 8552 ms

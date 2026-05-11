@@ -65,6 +65,10 @@ public class ManualThreadsSearchService implements SearchService {
                         Path file = files.get(j);
                         int count = scanner.countMatches(file, keyword);
 
+                        if (count > 0) {
+                            partialResult.addMatchedFile(file.getFileName().toString());
+                        }
+
                         partialResult.addMatch(count);
                         processedTotal[0]++;
 
@@ -96,12 +100,19 @@ public class ManualThreadsSearchService implements SearchService {
 
             long duration = timer.stop();
 
+            List<String> matchedFiles = new ArrayList<>();
+
+            for (PartialResult r : results) {
+                matchedFiles.addAll(r.getMatchedFiles());
+            }
+
             return new SearchSummary(
                     totalFiles,
                     filesWithMatches,
                     totalMatches,
                     duration,
-                    SearchMode.MANUAL_THREADS
+                    SearchMode.MANUAL_THREADS,
+                    matchedFiles
             );
 
         } catch (Exception e) {

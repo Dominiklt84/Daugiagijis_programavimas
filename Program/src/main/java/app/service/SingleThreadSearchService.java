@@ -33,6 +33,10 @@ public class SingleThreadSearchService implements SearchService {
 
             for (Path file : files) {
                 int count = scanner.countMatches(file, keyword);
+
+                if (count > 0) {
+                    result.addMatchedFile(file.getFileName().toString());
+                }
                 result.addMatch(count);
 
                 if (listener != null) {
@@ -47,7 +51,8 @@ public class SingleThreadSearchService implements SearchService {
                     result.getFilesWithMatches(),
                     result.getTotalMatches(),
                     duration,
-                    SearchMode.SINGLE_THREAD
+                    SearchMode.SINGLE_THREAD,
+                    result.getMatchedFiles()
             );
 
         } catch (Exception e) {

@@ -1,0 +1,18 @@
+Mode: SINGLE_THREAD
+Keyword: day
+Total files: 100000
+Matches: 404412
+Time: 8552 ms
+----------------------
+Mode: THREAD_POOL
+Keyword: day
+Total files: 100000
+Matches: 404412
+Time: 1792 ms
+----------------------
+Mode: MANUAL_THREADS
+Keyword: day
+Total files: 100000
+Matches: 404412
+Time: 2660 ms
+----------------------

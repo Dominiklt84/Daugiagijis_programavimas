@@ -47,6 +47,7 @@ public class SingleThreadSearchService implements SearchService {
             long duration = timer.stop();
 
             return new SearchSummary(
+                    keyword,
                     totalFiles,
                     result.getFilesWithMatches(),
                     result.getTotalMatches(),

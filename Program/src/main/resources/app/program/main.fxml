@@ -47,5 +47,6 @@
          </font>
       </Text>
       <Text layoutX="514.0" layoutY="92.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time (ms):" />
+      <Button fx:id="historyButton" layoutX="665.0" layoutY="39.0" prefHeight="26.0" prefWidth="76.0" text="History" />
    </children>
 </AnchorPane>

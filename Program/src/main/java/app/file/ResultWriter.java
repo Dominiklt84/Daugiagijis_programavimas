@@ -14,6 +14,7 @@ public class ResultWriter {
             writer.write("Search Results\n");
             writer.write("-------------------------\n");
             writer.write("Mode: " + summary.getModeName() + "\n");
+            writer.write("Keyword: " + summary.getKeyword() + "\n");
             writer.write("Total files: " + summary.getTotalFiles() + "\n");
             writer.write("Files with matches: " + summary.getFilesWithMatches() + "\n");
             writer.write("Total matches: " + summary.getTotalMatches() + "\n");

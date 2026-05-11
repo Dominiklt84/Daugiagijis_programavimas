@@ -92,6 +92,7 @@ public class ThreadPoolSearchService implements SearchService {
             }
 
             return new SearchSummary(
+                    keyword,
                     totalFiles,
                     filesWithMatches,
                     totalMatches,

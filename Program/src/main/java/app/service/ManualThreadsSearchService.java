@@ -107,6 +107,7 @@ public class ManualThreadsSearchService implements SearchService {
             }
 
             return new SearchSummary(
+                    keyword,
                     totalFiles,
                     filesWithMatches,
                     totalMatches,

@@ -1,12 +1,16 @@
 package app.ui;
 
 import app.file.*;
+import app.history.HistoryReader;
+import app.history.HistoryWriter;
 import app.model.SearchSummary;
 import app.service.SearchServiceController;
 import app.service.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
@@ -33,6 +37,8 @@ public class MainPanel implements Initializable {
     @FXML private ProgressBar progressBar;
     @FXML private TextArea outputArea;
 
+    @FXML private Button historyButton;
+
     @Override
     public void initialize(URL location, ResourceBundle resources){
         SpinnerValueFactory<Integer> valueFactory= new SpinnerValueFactory.IntegerSpinnerValueFactory(1,16,4);
@@ -53,6 +59,8 @@ public class MainPanel implements Initializable {
 
         browseButton.setOnAction(e->handleBrowse());
         startButton.setOnAction(e->handleStart());
+
+        historyButton.setOnAction(e -> openHistoryWindow());
     }
 
     private void handleBrowse(){
@@ -118,6 +126,9 @@ public class MainPanel implements Initializable {
                 });
             });
 
+            HistoryWriter historyWriter = new HistoryWriter();
+            historyWriter.save(summary);
+
             javafx.application.Platform.runLater(() -> {
 
                 timeLabel.setText(summary.getDurationMs() + " ms");
@@ -148,6 +159,29 @@ public class MainPanel implements Initializable {
         });
         worker.setDaemon(true);
         worker.start();
+    }
+
+    private void openHistoryWindow() {
+
+        Stage historyStage = new Stage();
+
+        TextArea historyArea = new TextArea();
+        historyArea.setEditable(false);
+
+        HistoryReader reader = new HistoryReader();
+        historyArea.setText(reader.read());
+
+        Button backButton = new Button("Close");
+
+        backButton.setOnAction(e -> historyStage.close());
+
+        VBox layout = new VBox(10, historyArea, backButton);
+
+        Scene scene = new Scene(layout, 500, 220);
+
+        historyStage.setTitle("Search History");
+        historyStage.setScene(scene);
+        historyStage.show();
     }
 
     private void showAlert(String message){

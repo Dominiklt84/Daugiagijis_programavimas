@@ -16,3 +16,15 @@ Total files: 100000
 Matches: 404412
 Time: 2660 ms
 ----------------------
+Mode: MANUAL_THREADS
+Keyword: a
+Total files: 100000
+Matches: 7686074
+Time: 1712 ms
+----------------------
+Mode: SINGLE_THREAD
+Keyword: a
+Total files: 100000
+Matches: 7686074
+Time: 8545 ms
+----------------------

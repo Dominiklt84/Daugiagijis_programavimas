@@ -10,8 +10,7 @@ public class HistoryWriter {
 
     public void save(SearchSummary summary) {
 
-        try (BufferedWriter writer =
-                     new BufferedWriter(new FileWriter("history.txt", true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("history.txt", true))) {
 
             writer.write("Mode: " + summary.getModeName());
             writer.newLine();

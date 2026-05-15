@@ -41,7 +41,7 @@ public class MainPanel implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources){
-        SpinnerValueFactory<Integer> valueFactory= new SpinnerValueFactory.IntegerSpinnerValueFactory(1,16,4);
+        SpinnerValueFactory<Integer> valueFactory= new SpinnerValueFactory.IntegerSpinnerValueFactory(1,100,4);
         threadsSpinner.setValueFactory(valueFactory);
         threadsSpinner.setEditable(true);
 

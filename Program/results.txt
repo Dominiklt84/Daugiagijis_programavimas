@@ -1,8 +1,8 @@
 Search Results
 -------------------------
-Mode: SINGLE_THREAD
-Keyword: a
+Mode: THREAD_POOL
+Keyword: day
 Total files: 100000
-Files with matches: 100000
-Total matches: 7686074
-Duration: 8545 ms
+Files with matches: 98282
+Total matches: 404412
+Duration: 2739 ms

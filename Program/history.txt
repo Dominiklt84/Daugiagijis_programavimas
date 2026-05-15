@@ -1,30 +1,30 @@
+Mode: MANUAL_THREADS
+Keyword: day
+Total files: 100000
+Matches: 404412
+Time: 2350 ms
+----------------------
 Mode: SINGLE_THREAD
 Keyword: day
 Total files: 100000
 Matches: 404412
-Time: 8552 ms
+Time: 7215 ms
+----------------------
+Mode: MANUAL_THREADS
+Keyword: day
+Total files: 100000
+Matches: 404412
+Time: 2133 ms
 ----------------------
 Mode: THREAD_POOL
 Keyword: day
 Total files: 100000
 Matches: 404412
-Time: 1792 ms
+Time: 1855 ms
 ----------------------
-Mode: MANUAL_THREADS
+Mode: THREAD_POOL
 Keyword: day
 Total files: 100000
 Matches: 404412
-Time: 2660 ms
-----------------------
-Mode: MANUAL_THREADS
-Keyword: a
-Total files: 100000
-Matches: 7686074
-Time: 1712 ms
-----------------------
-Mode: SINGLE_THREAD
-Keyword: a
-Total files: 100000
-Matches: 7686074
-Time: 8545 ms
+Time: 2739 ms
 ----------------------
